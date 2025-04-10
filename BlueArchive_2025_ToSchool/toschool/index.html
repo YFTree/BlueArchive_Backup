@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="zh">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>ToSchool〜君がそばにいる日常〜(非官方画廊）</title>
+		<style>
+   body {
+    margin: 0;
+    padding: 0;
+    background: #FFEEDB;
+    font-family: Arial, sans-serif;
+    overflow-x: hidden;
+  }
+  footer {
+    text-align: center;
+    padding: 20px;
+    color: #555;
+    font-size: 0.9em;
+  }
+
+  footer hr {
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+  }
+
+  footer a {
+    color: #007bff;
+    text-decoration: none;
+  }
+
+  footer a:hover {
+    text-decoration: underline;
+  }
+  /* 音乐控制按钮 */
+  .audio-controls {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .control-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 238, 219, 1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .control-button:hover {
+    transform: scale(1.1);
+  }
+
+  .control-button.muted::after {
+    content: "";
+    position: absolute;
+    width: 30px;
+    height: 2px;
+    background: #333;
+    transform: rotate(-45deg);
+  }
+
+  /* 主容器 */
+  .main-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    position: relative;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  /* 相册容器 */
+  .gallery-container {
+    width: 100%;
+    max-width: 1000px;
+    /* height: 70vh;  移除或注释掉这一行，不再固定高度 */
+    overflow: visible; /* 修改为 visible，允许内容溢出 */
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    width: 100%;
+    justify-items: center;
+    padding: 10px;
+    /* height: auto; 可以尝试添加这一行，确保 gallery 的高度根据内容自动调整 */
+  }
+
+  .image-box {
+    width: 150px;
+    height: 150px;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+  }
+
+  .image-box:hover {
+    transform: scale(1.05);
+  }
+
+  .image-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* 图片详情容器 */
+  .detail-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 100;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  .image-wrapper {
+    position: relative;
+    max-width: 90%;
+    max-height: 70vh;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .full-image {
+    max-width: 100%;
+    max-height: 70vh;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  }
+
+  /* 返回按钮样式 - 移动到右上方 */
+  .back-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 238, 219, 1);
+    border-radius: 50%;
+    color: #333;
+    font-size: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 101;
+  }
+
+  .back-button:hover {
+    background: rgba(238, 230, 217, 1);
+    transform: scale(1.1);
+  }
+
+  /* 按钮容器 */
+    /* 按钮容器 */
+    .buttons-group {
+      display: none;
+      width: 100%;
+      max-width: 800px;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .button-section {
+      display: flex;
+      background: rgba(255, 238, 219, 0.9); /* 与X按钮一致的背景色 */
+      border-radius: 10px;
+      padding: 15px;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      flex: 1;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    
+    .nav-buttons {
+      border-right: 2px solid #ddd;
+      padding-right: 20px;
+      margin-right: -10px;
+    }
+    
+    .action-buttons {
+      padding-left: 20px;
+    }
+    
+    .image-button, .download-button {
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      border: none;
+      background: rgba(255, 238, 219, 1); /* 与X按钮一致的背景色 */
+      color: #333;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      min-width: 80px;
+    }
+    
+    .image-button:hover, .download-button:hover {
+      background: rgba(238, 230, 217, 1);
+      transform: scale(1.05);
+    }
+
+  /* 标题样式 */
+  .main-title {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+    width: 70%;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+  }
+
+  .main-title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .main-title a:hover {
+    text-decoration: underline;
+  }
+/* ... 之前的 CSS 样式 ... */
+
+  /* 下载所有图片按钮容器 */
+  .download-all-container {
+    display: flex;
+    justify-content: center; /* 默认居中 */
+    width: 100%;
+    padding: 20px 10px; /* 上下内边距，左右稍小 */
+    box-sizing: border-box;
+  }
+
+  /* 下载所有图片按钮样式 - 继承下载图片按钮的样式 */
+  .download-all-button {
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: none;
+    background: rgba(255, 238, 219, 1); /* 与X按钮一致的背景色 */
+    color: #333;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    min-width: 80px;
+    text-decoration: none; /* 移除链接的下划线 */
+    width: 50%; /* 默认占据 50% 宽度 */
+    max-width: 400px; /* 可以设置一个最大宽度 */
+    text-align: center; /* 添加文本居中 */
+  }
+
+  .download-all-button:hover {
+    background: rgba(238, 230, 217, 1);
+    transform: scale(1.05);
+  }
+
+  /* 移动端竖屏状态下按钮宽度占据 100% */
+  @media screen and (max-width: 768px) {
+    .download-all-button {
+      width: 100%;
+    }
+  }
+
+  /* ... 之后的 CSS 样式 ... */
+  /* 移动端竖屏适配 */
+  @media screen and (max-width: 768px) {
+    .gallery {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      }
+
+    .image-box {
+        width: 120px;
+        height: 120px;
+      }
+
+    .buttons-group {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .button-section {
+      flex-wrap: nowrap;
+      flex-direction: row;
+      justify-content: space-around;
+      padding: 10px;
+    }
+
+    .nav-buttons {
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      justify-content: space-around; 
+    }
+
+    .action-buttons {
+      padding-top: 10px;
+      justify-content: center; 
+    }
+
+    .image-button, .download-button {
+      flex-grow: 1;
+      margin: 0;
+    }
+
+    .image-wrapper {
+      margin-bottom: 40px;
+    }
+  }
+
+  </style>
+	</head>
+	<body>
+		<h1 class="main-title"><a href="https://github.com/YFTree/BlueArchive_Backup">ToSchool〜<br>君がそばにいる日常〜<br>非官方画廊</a></h1>
+		<div class="audio-controls">
+			<div class="control-button" id="musicControl" title="背景音乐">
+				<svg width="24" height="24" viewbox="0 0 24 24" fill="#333">
+					&gt;<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path>
+				</svg>
+			</div>
+			<div class="control-button" id="soundControl" title="音效">
+				<svg width="24" height="24" viewbox="0 0 24 24" fill="#333">
+					&gt;<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-2h2v2zm0-3H9V7h2v6z"></path>
+				</svg>
+			</div>
+		</div>
+		<div class="main-container">
+			<div class="gallery-container">
+				<div class="gallery" id="gallery">
+					<div class="image-box" onclick="playSoundAndLoad('group0'); playBackgroundMusicOnInteraction();"><img src="./CG/D_CG00_1.jpg" alt="Group 00">
+					</div>
+					<div class="image-box" onclick="playSoundAndLoad('group1'); playBackgroundMusicOnInteraction();"><img src="./CG/D_CG01_1.jpg" alt="Group 01">
+					</div>
+					<div class="image-box" onclick="playSoundAndLoad('group2'); playBackgroundMusicOnInteraction();"><img src="./CG/D_CG02_1.jpg" alt="Group 02">
+					</div>
+					<div class="image-box" onclick="playSoundAndLoad('group3'); playBackgroundMusicOnInteraction();"><img src="./CG/D_CG03_1.jpg" alt="Group 03">
+					</div>
+					<div class="image-box" onclick="playSoundAndLoad('group4'); playBackgroundMusicOnInteraction();"><img src="./CG/D_CG04_1.jpg" alt="Group 04">
+					</div>
+					<div class="image-box" onclick="playSoundAndLoad('group5'); playBackgroundMusicOnInteraction();"><img src="./CG/D_CG05_1.jpg" alt="Group 05">
+					</div>
+					<div class="image-box" onclick="playSoundAndLoad('group6'); playBackgroundMusicOnInteraction();"><img src="./CG/D_CG06_1.jpg" alt="Group 06">
+					</div>
+					<div class="image-box" onclick="playSoundAndLoad('group7'); playBackgroundMusicOnInteraction();"><img src="./CG/D_CG07_1.jpg" alt="Group 07">
+					</div>
+					<div class="image-box" onclick="playSoundAndLoad('group8'); playBackgroundMusicOnInteraction();"><img src="./CG/D_CG08_1.jpg" alt="Group 08">
+					</div>
+					<div class="image-box" onclick="playSoundAndLoad('SD'); playBackgroundMusicOnInteraction();"><img src="./CG/D_SD_1.png" alt="Single Group">
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="detail-container" id="detailContainer">
+			<div class="back-button" onclick="playSoundAndBack()">
+				✕
+			</div>
+			<div class="image-wrapper"><img id="fullImage" class="full-image" src="./CG/D_CG00_1.jpg" alt="Full Image">
+			</div>
+			<div class="buttons-group" id="buttonsGroup">
+				<div class="button-section nav-buttons" id="navButtons"></div>
+				<div class="button-section action-buttons"><button class="download-button" onclick="playSoundAndDownload()">下载图片</button>
+				</div>
+			</div>
+		</div>
+		<audio id="backgroundMusic" loop><source src="background.mp3" type="audio/mp3">
+		</audio>
+		<audio id="clickSound"><source src="click.mp3" type="audio/mp3">
+		</audio>
+<script>
+  // 缓存的键名
+  const CACHE_KEY = 'To_School_image_groups';
+  // 缓存过期时间（例如：10 天后过期，单位：毫秒）
+  const CACHE_EXPIRATION_TIME = 10 * 24 * 60 * 60 * 1000;
+
+  // 音乐和音效控制状态
+  let musicEnabled = false;
+  let soundEnabled = true;
+  let musicStarted = false; // 标记音乐是否已开始播放
+
+  // 保存画廊滚动位置的变量
+  let galleryScrollPosition = 0;
+
+  // 获取控制元素
+  const musicControl = document.getElementById('musicControl');
+  const soundControl = document.getElementById('soundControl');
+  const bgMusic = document.getElementById('backgroundMusic');
+  const clickSoundSrc = 'click.mp3'; // 音效文件路径
+
+  // 播放音效函数 (创建新的 Audio 对象)
+  function playSound() {
+    if (!soundEnabled) {
+      console.log('音效被禁用，跳过播放。');
+      return;
+    }
+    const sound = new Audio(clickSoundSrc);
+    sound.play()
+      .then(() => {
+        console.log('音效播放成功。');
+      })
+      .catch(e => {
+        console.log('音效播放失败:', e);
+      });
+  }
+
+  // 从缓存加载图片数据
+  function loadImagesFromCache() {
+    try {
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      if (cachedData) {
+        const { data, timestamp } = JSON.parse(cachedData);
+        const now = Date.now();
+        if (data && timestamp && now - timestamp < CACHE_EXPIRATION_TIME) {
+          console.log('从缓存加载图片数据:', data);
+          // 直接使用缓存中的数据初始化 imageGroups
+          imageGroups = data;
+          // 首次加载时渲染画廊
+          renderGallery();
+          return true; // 表示成功从缓存加载
+        } else {
+          console.log('缓存已过期或数据无效，将重新加载。');
+          localStorage.removeItem(CACHE_KEY); // 移除过期缓存
+          return false;
+        }
+      }
+      return false; // 没有找到缓存
+    } catch (error) {
+      console.error('加载缓存失败:', error);
+      return false;
+    }
+  }
+
+  // 将图片数据缓存到浏览器
+  function cacheImagesData(data) {
+    try {
+      const cacheData = {
+        data: data,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+      console.log('图片数据已缓存。');
+    } catch (error) {
+      console.error('缓存图片数据失败:', error);
+    }
+  }
+
+  // 渲染画廊的函数
+  function renderGallery() {
+    const gallery = document.getElementById('gallery');
+    gallery.innerHTML = ''; // 清空现有内容
+    for (const groupName in imageGroups) {
+      if (imageGroups.hasOwnProperty(groupName)) {
+        const imageBox = document.createElement('div');
+        imageBox.classList.add('image-box');
+        imageBox.onclick = () => {
+          // 保存当前的滚动位置
+          galleryScrollPosition = window.scrollY;
+          playSoundAndLoad(groupName);
+          playBackgroundMusicOnInteraction();
+        };
+        const img = document.createElement('img');
+        img.src = imageGroups[groupName][0]; // 显示每个组的第一张图片作为预览
+        img.alt = groupName;
+        imageBox.appendChild(img);
+        gallery.appendChild(imageBox);
+      }
+    }
+  }
+
+  // 修改你的初始加载逻辑
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!loadImagesFromCache()) {
+      // 如果没有缓存或缓存过期，则使用现有的 imageGroups 数据渲染
+      renderGallery();
+      // 并缓存当前的 imageGroups 数据
+      cacheImagesData(imageGroups);
+    } else {
+      // 如果从缓存加载成功，renderGallery 已经在 loadImagesFromCache 中调用
+    }
+  });
+
+  // 尝试在用户交互时播放背景音乐
+  function playBackgroundMusicOnInteraction() {
+    if (!musicStarted) {
+      bgMusic.play().catch(e => console.log('背景音乐播放失败 (首次交互):', e));
+      musicEnabled = true;
+      musicStarted = true;
+      musicControl.classList.remove('muted');
+    }
+  }
+
+  // 音乐控制
+  musicControl.addEventListener('click', function() {
+    playSound(); // 点击音乐按钮时播放音效
+    musicEnabled = !musicEnabled;
+    if (musicEnabled) {
+      bgMusic.play().catch(e => console.log('背景音乐播放失败 (音乐按钮):', e));
+      musicControl.classList.remove('muted');
+    } else {
+      bgMusic.pause();
+      musicControl.classList.add('muted');
+    }
+  });
+
+  // 音效控制
+  soundControl.addEventListener('click', function() {
+    playSound(); // 点击音效按钮时播放音效
+    soundEnabled = !soundEnabled;
+    if (soundEnabled) {
+      soundControl.classList.remove('muted');
+    } else {
+      soundControl.classList.add('muted');
+    }
+  });
+
+  // 播放音效并加载图片
+  function playSoundAndLoad(groupName) {
+    playSound();
+    loadImages(groupName);
+  }
+
+  // 播放音效并返回
+  function playSoundAndBack() {
+    document.querySelector('.main-container').style.display = 'flex';
+    document.getElementById('detailContainer').style.display = 'none';
+    document.getElementById('buttonsGroup').style.display = 'none';
+
+    // 显示标题、页脚和下载所有图片按钮容器
+    document.querySelector('.main-title').style.display = 'block';
+    document.querySelector('footer').style.display = 'block';
+    document.querySelector('.download-all-container').style.display = 'flex';
+
+    // 恢复到之前保存的滚动位置
+    window.scrollTo(0, galleryScrollPosition);
+  }
+
+  // 播放音效并下载
+  function playSoundAndDownload() {
+    playSound();
+    downloadImage();
+  }
+
+  // 当前显示的图片组
+  let currentGroup = null;
+  let currentImageIndex = 0;
+
+  // 数据：每个组的图片
+  let imageGroups = {
+    group0: ['./CG/D_CG00_1.jpg'],
+    group1: ['./CG/D_CG01_1.jpg', './CG/D_CG01_2.jpg', './CG/D_CG01_3.jpg'],
+    group2: ['./CG/D_CG02_1.jpg', './CG/D_CG02_2.jpg', './CG/D_CG02_3.jpg'],
+    group3: ['./CG/D_CG03_1.jpg', './CG/D_CG03_2.jpg', './CG/D_CG03_3.jpg'],
+    group4: ['./CG/D_CG04_1.jpg', './CG/D_CG04_2.jpg'],
+    group5: ['./CG/D_CG05_1.jpg', './CG/D_CG05_2.jpg', './CG/D_CG05_3.jpg'],
+    group6: ['./CG/D_CG06_1.jpg', './CG/D_CG06_2.jpg', './CG/D_CG06_3.jpg'],
+    group7: ['./CG/D_CG07_1.jpg', './CG/D_CG07_2.jpg'],
+    group8: ['./CG/D_CG08_1.jpg', './CG/D_CG08_2.jpg', './CG/D_CG08_3.jpg'],
+    SD: ['./CG/D_SD_1.png', './CG/D_SD_2.png'],
+  };
+
+  // 加载组图片
+  function loadImages(groupName) {
+    // 设置当前组
+    currentGroup = groupName;
+    currentImageIndex = 0;
+
+    // 更新显示的图片为第一张
+    const images = imageGroups[groupName];
+    document.getElementById('fullImage').src = images[0];
+
+    // 动态生成导航按钮
+    const navButtons = document.getElementById('navButtons');
+    navButtons.innerHTML = ''; // 清空按钮
+
+    images.forEach((image, index) => {
+      const button = document.createElement('button');
+      button.classList.add('image-button');
+      button.textContent = `图片 ${index + 1}`;
+      button.onclick = () => {
+        playSound();
+        currentImageIndex = index;
+        document.getElementById('fullImage').src = image;
+        // 尝试在用户点击图片导航按钮时播放背景音乐 (如果尚未播放)
+        playBackgroundMusicOnInteraction();
+      };
+      navButtons.appendChild(button);
+    });
+
+    // 显示图片详情和按钮区
+    document.getElementById('detailContainer').style.display = 'flex';
+    document.getElementById('buttonsGroup').style.display = 'flex';
+
+    // 隐藏相册主容器、标题、页脚和下载所有图片按钮容器
+    document.querySelector('.main-container').style.display = 'none';
+    document.querySelector('.main-title').style.display = 'none';
+    document.querySelector('footer').style.display = 'none';
+    document.querySelector('.download-all-container').style.display = 'none';
+  }
+
+  // 下载当前图片
+  function downloadImage() {
+    const imageUrl = document.getElementById('fullImage').src;
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = imageUrl.split('/').pop();
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // 返回相册组页面
+  function backToGallery() {
+    playSound();
+    document.querySelector('.main-container').style.display = 'flex';
+    document.getElementById('detailContainer').style.display = 'none';
+    document.getElementById('buttonsGroup').style.display = 'none';
+
+    // 显示标题、页脚和下载所有图片按钮容器
+    document.querySelector('.main-title').style.display = 'block';
+    document.querySelector('footer').style.display = 'block';
+    document.querySelector('.download-all-container').style.display = 'flex';
+
+    // 恢复到之前保存的滚动位置
+    window.scrollTo(0, galleryScrollPosition);
+  }
+
+  // 优化：在用户交互事件中直接播放声音
+  document.querySelectorAll('.image-box').forEach(box => {
+    // playBackgroundMusicOnInteraction(); // 之前尝试在这里播放，现在移动到 onclick
+    // box.addEventListener('click', playSound); // playSound 已经在 imageBox.onclick 中调用
+  });
+
+  document.querySelectorAll('.back-button').forEach(button => {
+    button.addEventListener('click', () => {
+      playBackgroundMusicOnInteraction(); // 尝试在这里播放
+      backToGallery();
+    });
+  });
+
+  document.querySelectorAll('.download-button').forEach(button => {
+    button.addEventListener('click', () => {
+      playSound();
+      playBackgroundMusicOnInteraction(); // 尝试在这里播放
+      downloadImage();
+    });
+  });
+</script>
+	</div>
+    <div class="download-all-container">
+        <a href="all_images.7z" download="all_images.7z" class="download-all-button">下载所有图片 (7z)</a>
+    </div>
+    <footer>
+        <hr>
+        <p>由 YFTree 组织</p>
+        <p>Github 仓库: <br><a href="https://github.com/YFTree/BlueArchive_Backup">https://github.com/YFTree/BlueArchive_Backup</a></p>
+        <p>注意：<br>本项目仅用作备份和宣传，请勿用于商业活动</p>
+        <p>版权所有：<a href="https://bluearchive.jp/" target="_blank" rel="noopener noreferrer">碧蓝档案日本©</a></p>
+    </footer>
+	</body>
+</html>
