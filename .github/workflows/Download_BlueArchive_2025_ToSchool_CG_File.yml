@@ -1,0 +1,78 @@
+name: 下载 BlueArchive ToSchool CG文件并推送到当前分支
+on:
+  workflow_dispatch:
+
+jobs:
+  download_and_push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        lfs: false # 确保不启用 LFS
+
+    - name: Create destination directories
+      run: |
+        mkdir -p BlueArchive_2025_ToSchool/toschool/CG
+
+    - name: Download files
+      run: |
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG00_1.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG01_1.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG01_2.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG01_3.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG02_1.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG02_2.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG02_3.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG03_1.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG03_2.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG03_3.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG04_1.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG04_2.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG05_1.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG05_2.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG05_3.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG06_1.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG06_2.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG06_3.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG07_1.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG07_2.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG08_1.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG08_2.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_CG08_3.jpg
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_SD_1.png
+        wget -P BlueArchive_2025_ToSchool/toschool/CG/ https://webusstatic.yo-star.com/bluearchive-jp/ba-jp-aprilfools-minigame/prod/minigame-2025/toschool/CG/D_SD_2.png
+        wget -P BlueArchive_2025_ToSchool/toschool/ https://azusa-mikan.frp.wo25.net:32000/d/click.mp3
+        wget -P BlueArchive_2025_ToSchool/toschool/ https://azusa-mikan.frp.wo25.net:32000/d/background.mp3
+        wget -P BlueArchive_2025_ToSchool/toschool/ https://azusa-mikan.frp.wo25.net:32000/d/index.html
+    - name: List downloaded files
+      run: ls -R BlueArchive_2025_ToSchool/toschool/
+
+    - name: Compress CG files
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y p7zip-full
+        7z a ./BlueArchive_2025_ToSchool/toschool/all_images.7z ./BlueArchive_2025_ToSchool/toschool/CG/*.jpg ./BlueArchive_2025_ToSchool/toschool/CG/*.png
+    - name: List downloaded files
+      run: ls -R BlueArchive_2025_ToSchool/toschool/
+    
+    - name: Add Files
+      run: git add .
+
+    - name: Commit Files
+      run: |
+        git config --global user.name "${{ github.actor }}"
+        git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "下载 BlueArchive ToSchool CG文件并添加压缩包"
+        fi
+
+    - name: Commit and push changes
+      run: |
+          git push origin ${{ github.ref_name }}
+
+    - name: Check Git LFS Status (After Initial Push)
+      run: git lfs status
