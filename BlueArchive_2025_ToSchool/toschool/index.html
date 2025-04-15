@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh">
 	<head>
 		<meta charset="UTF-8">
@@ -253,7 +253,6 @@
   .main-title a:hover {
     text-decoration: underline;
   }
-/* ... 之前的 CSS 样式 ... */
 
   /* 下载所有图片按钮容器 */
   .download-all-container {
@@ -293,7 +292,6 @@
     }
   }
 
-  /* ... 之后的 CSS 样式 ... */
   /* 移动端竖屏适配 */
   @media screen and (max-width: 768px) {
     .gallery {
@@ -337,6 +335,15 @@
     .image-wrapper {
       margin-bottom: 40px;
     }
+  }
+
+  .full-image {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out; /* 可以调整过渡时间 */
+  }
+
+  .full-image.loaded {
+    opacity: 1;
   }
 
   </style>
@@ -399,9 +406,11 @@
 		</audio>
 <script>
   // 缓存的键名
-  const CACHE_KEY = 'To_School_image_groups';
+  const CACHE_KEY = 'To_School_image_resources';
   // 缓存过期时间（例如：10 天后过期，单位：毫秒）
   const CACHE_EXPIRATION_TIME = 10 * 24 * 60 * 60 * 1000;
+  // 缓存数据版本，用于在数据结构或内容发生变化时使旧缓存失效
+  const CACHE_VERSION = '1.0';
 
   // 音乐和音效控制状态
   let musicEnabled = false;
@@ -433,63 +442,125 @@
       });
   }
 
-  // 从缓存加载图片数据
-  function loadImagesFromCache() {
+  // 从 Cache API 加载预加载的资源
+  async function loadPreloadedResources() {
     try {
-      const cachedData = localStorage.getItem(CACHE_KEY);
-      if (cachedData) {
-        const { data, timestamp } = JSON.parse(cachedData);
-        const now = Date.now();
-        if (data && timestamp && now - timestamp < CACHE_EXPIRATION_TIME) {
-          console.log('从缓存加载图片数据:', data);
-          // 直接使用缓存中的数据初始化 imageGroups
-          imageGroups = data;
-          // 首次加载时渲染画廊
-          renderGallery();
-          return true; // 表示成功从缓存加载
-        } else {
-          console.log('缓存已过期或数据无效，将重新加载。');
-          localStorage.removeItem(CACHE_KEY); // 移除过期缓存
-          return false;
-        }
+      const cache = await caches.open(CACHE_KEY);
+      const keys = await cache.keys();
+      if (!keys || keys.length === 0) {
+        console.log('Cache API 中没有找到缓存的资源。');
+        return false;
       }
-      return false; // 没有找到缓存
+
+      const cachedDataResponse = await cache.match('cache-data');
+      if (!cachedDataResponse || !cachedDataResponse.ok) {
+        console.log('未找到缓存的数据元信息或元信息无效。');
+        await caches.delete(CACHE_KEY); // 清理可能不完整的缓存
+        return false;
+      }
+
+      const cachedData = await cachedDataResponse.json();
+      if (cachedData.version !== CACHE_VERSION || !cachedData.resources || Object.keys(cachedData.resources).length === 0) {
+        console.log('缓存版本不匹配或资源数据为空/无效。');
+        await caches.delete(CACHE_KEY); // 清理过时的缓存
+        return false;
+      }
+
+      console.log('从 Cache API 加载预加载的资源:', cachedData.resources);
+      imageGroups = convertCachedResourcesToImageGroups(cachedData.resources);
+      renderGallery();
+      return true;
+
     } catch (error) {
-      console.error('加载缓存失败:', error);
+      console.error('加载预加载的资源失败:', error);
       return false;
     }
   }
 
-  // 将图片数据缓存到浏览器
-  function cacheImagesData(data) {
+  // 将缓存的资源数据转换为 imageGroups 的格式
+  function convertCachedResourcesToImageGroups(resources) {
+    const newImageGroups = {};
+    for (const groupName in resources) {
+      if (resources.hasOwnProperty(groupName)) {
+        newImageGroups[groupName] = resources[groupName].map(item => item.dataUrl);
+      }
+    }
+    return newImageGroups;
+  }
+
+  // 预加载所有图片资源并缓存到 Cache API
+  async function preloadAndCacheResources() {
+    const resourcesToCache = {};
+    for (const groupName in imageGroups) {
+      if (imageGroups.hasOwnProperty(groupName)) {
+        resourcesToCache[groupName] = [];
+        for (const imageUrl of imageGroups[groupName]) {
+          try {
+            const response = await fetch(imageUrl);
+            if (!response.ok) {
+              console.error(`加载图片失败: ${imageUrl}`, response.status);
+              resourcesToCache[groupName].push(null);
+              continue;
+            }
+            const blob = await response.blob();
+            const dataUrl = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+            resourcesToCache[groupName].push({ url: imageUrl, dataUrl: dataUrl });
+          } catch (error) {
+            console.error(`预加载图片出错: ${imageUrl}`, error);
+            resourcesToCache[groupName].push(null);
+          }
+        }
+      }
+    }
+
     try {
-      const cacheData = {
-        data: data,
-        timestamp: Date.now()
-      };
-      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-      console.log('图片数据已缓存。');
+      const cache = await caches.open(CACHE_KEY);
+      // 先清理旧的缓存
+      const keysToDelete = await cache.keys();
+      await Promise.all(keysToDelete.map(key => cache.delete(key)));
+
+      // 缓存资源数据
+      await cache.put('cache-data', new Response(JSON.stringify({
+        version: CACHE_VERSION,
+        resources: resourcesToCache
+      })));
+
+      // 缓存实际的图片数据
+      for (const groupName in resourcesToCache) {
+        if (resourcesToCache.hasOwnProperty(groupName)) {
+          for (const resource of resourcesToCache[groupName]) {
+            if (resource && resource.dataUrl) {
+              await cache.put(resource.url, new Response(resource.dataUrl));
+            }
+          }
+        }
+      }
+
+      console.log('所有图片资源已预加载并缓存到 Cache API。');
     } catch (error) {
-      console.error('缓存图片数据失败:', error);
+      console.error('缓存预加载的资源失败:', error);
     }
   }
 
-  // 渲染画廊的函数
   function renderGallery() {
     const gallery = document.getElementById('gallery');
-    gallery.innerHTML = ''; // 清空现有内容
+    gallery.innerHTML = '';
     for (const groupName in imageGroups) {
       if (imageGroups.hasOwnProperty(groupName)) {
         const imageBox = document.createElement('div');
         imageBox.classList.add('image-box');
         imageBox.onclick = () => {
-          // 保存当前的滚动位置
           galleryScrollPosition = window.scrollY;
           playSoundAndLoad(groupName);
           playBackgroundMusicOnInteraction();
         };
         const img = document.createElement('img');
-        img.src = imageGroups[groupName][0]; // 显示每个组的第一张图片作为预览
+        img.src = imageGroups[groupName][0];
         img.alt = groupName;
         imageBox.appendChild(img);
         gallery.appendChild(imageBox);
@@ -497,19 +568,13 @@
     }
   }
 
-  // 修改你的初始加载逻辑
-  document.addEventListener('DOMContentLoaded', () => {
-    if (!loadImagesFromCache()) {
-      // 如果没有缓存或缓存过期，则使用现有的 imageGroups 数据渲染
-      renderGallery();
-      // 并缓存当前的 imageGroups 数据
-      cacheImagesData(imageGroups);
-    } else {
-      // 如果从缓存加载成功，renderGallery 已经在 loadImagesFromCache 中调用
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!await loadPreloadedResources()) {
+      console.log('未找到有效缓存，开始预加载资源。');
+      await preloadAndCacheResources();
     }
   });
 
-  // 尝试在用户交互时播放背景音乐
   function playBackgroundMusicOnInteraction() {
     if (!musicStarted) {
       bgMusic.play().catch(e => console.log('背景音乐播放失败 (首次交互):', e));
@@ -519,9 +584,8 @@
     }
   }
 
-  // 音乐控制
   musicControl.addEventListener('click', function() {
-    playSound(); // 点击音乐按钮时播放音效
+    playSound();
     musicEnabled = !musicEnabled;
     if (musicEnabled) {
       bgMusic.play().catch(e => console.log('背景音乐播放失败 (音乐按钮):', e));
@@ -534,43 +598,36 @@
 
   // 音效控制
   soundControl.addEventListener('click', function() {
-    playSound(); // 点击音效按钮时播放音效
-    soundEnabled = !soundEnabled;
+    soundEnabled = !soundEnabled; // 先切换音效状态
     if (soundEnabled) {
+      playSound(); // 状态切换为启用后播放音效
       soundControl.classList.remove('muted');
     } else {
       soundControl.classList.add('muted');
     }
   });
 
-  // 播放音效并加载图片
   function playSoundAndLoad(groupName) {
     playSound();
     loadImages(groupName);
   }
 
-  // 播放音效并返回
   function playSoundAndBack() {
+    playSound()
     document.querySelector('.main-container').style.display = 'flex';
     document.getElementById('detailContainer').style.display = 'none';
     document.getElementById('buttonsGroup').style.display = 'none';
-
-    // 显示标题、页脚和下载所有图片按钮容器
     document.querySelector('.main-title').style.display = 'block';
     document.querySelector('footer').style.display = 'block';
     document.querySelector('.download-all-container').style.display = 'flex';
-
-    // 恢复到之前保存的滚动位置
     window.scrollTo(0, galleryScrollPosition);
   }
 
-  // 播放音效并下载
   function playSoundAndDownload() {
     playSound();
     downloadImage();
   }
 
-  // 当前显示的图片组
   let currentGroup = null;
   let currentImageIndex = 0;
 
@@ -588,46 +645,64 @@
     SD: ['./CG/D_SD_1.png', './CG/D_SD_2.png'],
   };
 
-  // 加载组图片
-  function loadImages(groupName) {
-    // 设置当前组
+  async function loadImages(groupName) {
     currentGroup = groupName;
     currentImageIndex = 0;
-
-    // 更新显示的图片为第一张
-    const images = imageGroups[groupName];
-    document.getElementById('fullImage').src = images[0];
-
-    // 动态生成导航按钮
+    const imageUrls = imageGroups[groupName];
+    const fullImageElement = document.getElementById('fullImage');
     const navButtons = document.getElementById('navButtons');
-    navButtons.innerHTML = ''; // 清空按钮
+    navButtons.innerHTML = '';
 
-    images.forEach((image, index) => {
+    const loadImageFromCache = async (url) => {
+      const cachedResponse = await caches.match(url);
+      if (cachedResponse && cachedResponse.ok) {
+        return await cachedResponse.text();
+      }
+      return null;
+    };
+
+    const displayImage = (src) => {
+      fullImageElement.classList.remove('loaded');
+      fullImageElement.onload = () => {
+        fullImageElement.classList.add('loaded');
+      };
+      fullImageElement.src = src;
+    };
+
+    // 加载第一张图片
+    const cachedSrcFirst = await loadImageFromCache(imageUrls[0]);
+    if (cachedSrcFirst) {
+      displayImage(cachedSrcFirst);
+    } else {
+      displayImage(imageUrls[0]); // 缓存未命中，加载原始 URL
+    }
+
+    imageUrls.forEach(async (imageUrl, index) => {
       const button = document.createElement('button');
       button.classList.add('image-button');
       button.textContent = `图片 ${index + 1}`;
-      button.onclick = () => {
+      button.onclick = async () => {
         playSound();
         currentImageIndex = index;
-        document.getElementById('fullImage').src = image;
-        // 尝试在用户点击图片导航按钮时播放背景音乐 (如果尚未播放)
+        const cachedSrc = await loadImageFromCache(imageUrl);
+        if (cachedSrc) {
+          displayImage(cachedSrc);
+        } else {
+          displayImage(imageUrl);
+        }
         playBackgroundMusicOnInteraction();
       };
       navButtons.appendChild(button);
     });
 
-    // 显示图片详情和按钮区
     document.getElementById('detailContainer').style.display = 'flex';
     document.getElementById('buttonsGroup').style.display = 'flex';
-
-    // 隐藏相册主容器、标题、页脚和下载所有图片按钮容器
     document.querySelector('.main-container').style.display = 'none';
     document.querySelector('.main-title').style.display = 'none';
     document.querySelector('footer').style.display = 'none';
     document.querySelector('.download-all-container').style.display = 'none';
   }
 
-  // 下载当前图片
   function downloadImage() {
     const imageUrl = document.getElementById('fullImage').src;
     const link = document.createElement('a');
@@ -638,42 +713,16 @@
     document.body.removeChild(link);
   }
 
-  // 返回相册组页面
   function backToGallery() {
     playSound();
     document.querySelector('.main-container').style.display = 'flex';
     document.getElementById('detailContainer').style.display = 'none';
     document.getElementById('buttonsGroup').style.display = 'none';
-
-    // 显示标题、页脚和下载所有图片按钮容器
     document.querySelector('.main-title').style.display = 'block';
     document.querySelector('footer').style.display = 'block';
     document.querySelector('.download-all-container').style.display = 'flex';
-
-    // 恢复到之前保存的滚动位置
     window.scrollTo(0, galleryScrollPosition);
   }
-
-  // 优化：在用户交互事件中直接播放声音
-  document.querySelectorAll('.image-box').forEach(box => {
-    // playBackgroundMusicOnInteraction(); // 之前尝试在这里播放，现在移动到 onclick
-    // box.addEventListener('click', playSound); // playSound 已经在 imageBox.onclick 中调用
-  });
-
-  document.querySelectorAll('.back-button').forEach(button => {
-    button.addEventListener('click', () => {
-      playBackgroundMusicOnInteraction(); // 尝试在这里播放
-      backToGallery();
-    });
-  });
-
-  document.querySelectorAll('.download-button').forEach(button => {
-    button.addEventListener('click', () => {
-      playSound();
-      playBackgroundMusicOnInteraction(); // 尝试在这里播放
-      downloadImage();
-    });
-  });
 </script>
 	</div>
     <div class="download-all-container">
